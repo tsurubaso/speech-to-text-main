@@ -1,4 +1,4 @@
-#directly to console, save to file by bit of 3 minutes, with ponctuiation replacement without few problems: ?!.
+#directly to console, save to file by bit of 3 minutes, with ponctuation replacement without few problems: ?!.
 import os
 import re
 import speech_recognition as sr
