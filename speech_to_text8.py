@@ -30,6 +30,7 @@ def replace_punctuation(text):
         "point de suspension": "...",
         "trois petits points": "...",
         "point": ".",
+        "points": ".",
         "virgule": ",",
         "virgules": ",",
         "deux-points": ":",
