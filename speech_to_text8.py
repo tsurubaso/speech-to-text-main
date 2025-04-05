@@ -38,13 +38,18 @@ def replace_punctuation(text):
         "tiret": "-",
         "parenthèse gauche": "(",
         "parenthèse droite": ")",
+        "fermez les guillemets": "\"",
+        "ouvrez les guillemets": "\"",
+        "fermer les guillemets": "\"",
         "guillemets": "\"",
+        "guillemet": "\"",
         "apostrophe": "'",
         "crochet gauche": "[",
         "crochet droit": "]",
         "accolade gauche": "{",
         "accolade droite": "}",
         "à la ligne": "\n",
+        
     }
 
     # Trier les remplacements par longueur décroissante
