@@ -34,8 +34,15 @@ def replace_punctuation(text):
         "virgule": ",",
         "virgules": ",",
         "deux-points": ":",
+        "deux points": ":",
+        "de points": ":",
+        "de point": ":",
+        "de poing": ":",
         "point-virgule": ";",
         "tiret": "-",
+        "ouvrez les parenthèses": "(",
+        "fermez les parenthèses": ")",
+        "fermer les parenthèses": ")",
         "parenthèse gauche": "(",
         "parenthèse droite": ")",
         "fermez les guillemets": "\"",
@@ -66,7 +73,13 @@ def replace_punctuation(text):
     text = re.sub(r'[ ]+', ' ', text)  # normalise les espaces simples
 
     # Mise en majuscule après un point
-    text = re.sub(r'\.(\s*)(\w)', lambda match: '. ' + match.group(2).upper(), text)
+    text = re.sub(r'([.?!])(\s*)(\w)', lambda match: match.group(1) + match.group(2) + match.group(3).upper(), text)
+
+    # Mise en majuscule après un deux-points
+    text = re.sub(r'(:)(\s*)(\w)', lambda match: match.group(1) + match.group(2) + match.group(3).upper(), text)
+
+    # Mise en majuscule du premier mot du texte
+    text = re.sub(r'^(\w)', lambda match: match.group(1).upper(), text)
 
     # Trim début
     text = re.sub(r'^\s*', '', text)
