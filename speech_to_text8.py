@@ -92,7 +92,7 @@ def replace_punctuation(text):
 def speech_to_text(input_path: str, language: str, output_path: str) -> None:
     wav_file = prepare_voice_file(input_path)
     audio = AudioSegment.from_wav(wav_file)
-    segment_length = 3 * 60 * 1000  # 3 minutes in milliseconds
+    segment_length = 5 * 60 * 1000  # 5 minutes in milliseconds
     segments = [audio[i:i + segment_length] for i in range(0, len(audio), segment_length)]
 
     with open(output_path, 'w', encoding='utf-8') as file:
