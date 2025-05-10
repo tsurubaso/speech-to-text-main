@@ -1,9 +1,9 @@
-import torchaudio
 import torch
 from denoiser.demucs import Demucs
 import os
+from pydub import AudioSegment
+import numpy as np
 
-# Charger manuellement le modèle
 def load_model(model_path, device='cpu'):
     model = Demucs()
     state = torch.load(model_path, map_location=device)
@@ -11,48 +11,64 @@ def load_model(model_path, device='cpu'):
     model.eval()
     return model.to(device)
 
-def denoise_audio(model, input_path, output_path, chunk_duration=180):  # Durée de chaque morceau en secondes 300=5 mins
-    # Charger l'audio
-    waveform, sample_rate = torchaudio.load(input_path)
+def load_audio_pydub(input_path):
+    audio = AudioSegment.from_file(input_path)
+    audio = audio.set_channels(1)  # Assurer un canal unique
+    samples = np.array(audio.get_array_of_samples(), dtype=np.float32)
+    sample_rate = audio.frame_rate
+    samples /= np.max(np.abs(samples))  # Normalisation
+    return torch.tensor(samples).unsqueeze(0), sample_rate
 
-    # Découper l'audio en morceaux (en secondes)
+def denoise_audio(model, input_path, output_path, chunk_duration=180):
+    waveform, sample_rate = load_audio_pydub(input_path)
     num_samples = waveform.size(1)
-    chunk_size = chunk_duration * sample_rate  # Convertir durée en nombre de samples
-    num_chunks = (num_samples + chunk_size - 1) // chunk_size  # Nombre de morceaux nécessaires
+    chunk_size = chunk_duration * sample_rate
+    num_chunks = (num_samples + chunk_size - 1) // chunk_size
 
-    # Sauvegarder les morceaux traités
     all_chunks = []
-    
     for i in range(num_chunks):
         start = i * chunk_size
         end = min((i + 1) * chunk_size, num_samples)
-        
         chunk_waveform = waveform[:, start:end]
-        
-        # Réduction de bruit
         with torch.no_grad():
             enhanced_chunk = model(chunk_waveform.unsqueeze(0)).squeeze(0)
-        
         all_chunks.append(enhanced_chunk)
         print(f"Processed chunk {i+1}/{num_chunks}")
 
-    # Fusionner les morceaux traités
     enhanced_waveform = torch.cat(all_chunks, dim=1)
-
-    # Sauvegarder l'audio nettoyé
-    torchaudio.save(output_path, enhanced_waveform, sample_rate)
+    
+    # Exporter le fichier en format WAV après traitement
+    output_audio = AudioSegment(
+        data=enhanced_waveform.numpy().tobytes(),
+        frame_rate=sample_rate,
+        sample_width=2,  # Ajuste selon les besoins
+        channels=1
+    )
+    output_audio.export(output_path, format="wav")
     print(f"Denoised audio saved as: {output_path}")
 
 # --- CONFIG ---
-model_path = input("Enter the path to the model file: ").strip()
+
+username = input("Enter your Windows username: ").strip()
+hub_dir = f"C:/Users/{username}/.cache/torch/hub"
+
+# Recherche du fichier contenant "dns48" dans le hub directory
+model_file = None
+if os.path.isdir(hub_dir):
+    for file in os.listdir(hub_dir):
+        if "dns48" in file and file.endswith(".th"):
+            model_file = os.path.join(hub_dir, file)
+            break
+
+if not model_file:
+    print("No model file containing 'dns48' found in:")
+    print(hub_dir)
+    print("Please download it from:")
+    print("https://dl.fbaipublicfiles.com/denoiser/dns48-11decc9d8e3f0998.th")
+    exit()
+
 input_file = input("Enter the path to the noisy audio file: ").strip()
 output_file = input("Enter the output path for the cleaned audio file: ").strip()
 
-# Vérifier si le modèle existe
-if not os.path.exists(model_path):
-    print("Model file not found. Exiting...")
-    exit()
-
-# Charger et appliquer le modèle
-model = load_model(model_path)
+model = load_model(model_file)
 denoise_audio(model, input_file, output_file)
